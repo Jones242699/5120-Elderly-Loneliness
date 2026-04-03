@@ -1,13 +1,12 @@
 import json
 import math
-import urllib.request
+from db import get_counseling_centers  # Add
 
 
-# Toggle mock mode (True = use mock data, False = call real API)
+# Toggle mock mode
 USE_MOCK = True
 
 
-# Build a standard response (ensures headers are always included)
 def build_response(status_code, body_dict):
     return {
         "statusCode": status_code,
@@ -19,9 +18,8 @@ def build_response(status_code, body_dict):
     }
 
 
-# Calculate distance using Haversine formula (in meters)
 def calculate_distance(lat1, lon1, lat2, lon2):
-    R = 6371000  # Earth's radius in meters
+    R = 6371000
 
     phi1 = math.radians(lat1)
     phi2 = math.radians(lat2)
@@ -37,50 +35,27 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     return R * c
 
 
-# Fetch data from teammate API
-def fetch_centers_from_api():
-    url = "https://api-url/counseling-centers"  # TODO: replace
-
-    try:
-        with urllib.request.urlopen(url, timeout=5) as response:
-            data = json.loads(response.read())
-
-        return {
-            "success": True,
-            "data": data.get("data", [])
-        }
-
-    except Exception as e:
-        print("ERROR: Failed to fetch counseling centers API:", str(e))
-        return {
-            "success": False,
-            "data": []
-        }
-
-
 def lambda_handler(event, context):
 
-    # 1. Extract query parameters safely
+    # 1. Extract params
     params = event.get("queryStringParameters", {}) or {}
 
-    # 2. Validate required parameters
     if not params.get("lat") or not params.get("lng"):
         return build_response(400, {
             "status": "error",
             "message": "Missing user's location (lat/lng)"
         })
 
-    # 3. Convert parameters to float
     try:
         user_lat = float(params.get("lat"))
         user_lng = float(params.get("lng"))
     except ValueError:
         return build_response(400, {
             "status": "error",
-            "message": "Invalid lat/lng, coordinates must be numbers"
+            "message": "Invalid lat/lng"
         })
 
-    # 4. Get data source (mock or API)
+    # 2. Data source
     if USE_MOCK:
         centers = [
             {
@@ -99,20 +74,18 @@ def lambda_handler(event, context):
             }
         ]
     else:
-        api_result = fetch_centers_from_api()
-
-        # External API failure
-        if not api_result["success"]:
+        try:
+            centers = get_counseling_centers()  # Fetch from database
+        except Exception as e:
+            print("ERROR: DB query failed:", str(e))
             return build_response(500, {
                 "status": "error",
-                "message": "Failed to fetch data from upstream service"
+                "message": "Database query failed"
             })
 
-        centers = api_result["data"]
-
-    # 4.5 Database is empty (API succeeded but no records exist)
+    # 3. Empty DB
     if not centers:
-        print("WARNING: Database returned empty dataset")
+        print("WARNING: No data in database")
 
         return build_response(200, {
             "status": "success",
@@ -120,7 +93,7 @@ def lambda_handler(event, context):
             "message": "No counseling centers exist in the database."
         })
 
-    # 5. Calculate distance
+    # 4. Calculate distance
     result = []
 
     for c in centers:
@@ -128,17 +101,17 @@ def lambda_handler(event, context):
             lat = float(c["latitude"])
             lng = float(c["longitude"])
         except (TypeError, ValueError, KeyError):
-            continue  # skip invalid records
+            continue
 
         distance = calculate_distance(user_lat, user_lng, lat, lng)
 
-        item = c.copy()
+        item = dict(c)
         item["distance_meters"] = round(distance)
         item["distance_km"] = round(distance / 1000, 2)
 
         result.append(item)
 
-    # 6. Filtering result is empty (valid case)
+    # 5. Filter empty
     if not result:
         print("INFO: No centers matched after filtering")
 
@@ -148,14 +121,11 @@ def lambda_handler(event, context):
             "message": "No counseling centers found"
         })
 
-    # 7. Sort by distance (ascending)
+    # 6. Sort + limit
     result.sort(key=lambda x: x["distance_meters"])
+    result = result[:10]
 
-    # 8. Limit results
-    LIMIT = 10
-    result = result[:LIMIT]
-
-    # 9. Return success response
+    # 7. Return
     return build_response(200, {
         "status": "success",
         "data": result
