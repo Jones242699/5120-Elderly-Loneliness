@@ -1,5 +1,16 @@
+import json
 from db import get_benches_in_bbox
-from utils import build_response
+
+
+def build_response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+        },
+        "body": json.dumps(body)
+    }
 
 
 def lambda_handler(event, context):
@@ -18,7 +29,7 @@ def lambda_handler(event, context):
             "error": "Missing required parameters: minLat, maxLat, minLng, maxLng"
         })
 
-    # 3. Convert to float (handle invalid input)
+    # 3. Convert to float
     try:
         min_lat = float(min_lat)
         max_lat = float(max_lat)
@@ -45,7 +56,6 @@ def lambda_handler(event, context):
                 "longitude": float(b["longitude"])
             })
 
-        # 6. Return response
         return build_response(200, {
             "status": "success",
             "count": len(result),
@@ -54,7 +64,6 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print("Lambda error:", str(e))
-
         return build_response(500, {
             "error": "Internal server error"
         })
