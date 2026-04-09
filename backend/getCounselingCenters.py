@@ -12,6 +12,9 @@ def build_response(status_code, body):
         "body": json.dumps(body)
     }
 
+def format_hours(value):
+    return value if value else "Closed"
+
 
 def lambda_handler(event, context):
 
@@ -20,9 +23,8 @@ def lambda_handler(event, context):
 
         lat = params.get("lat")
         lng = params.get("lng")
-        radius = params.get("radius", 5000)  # default 5km
+        radius = params.get("radius", 5000)
 
-        # parameter validation
         if not lat or not lng:
             return build_response(400, {
                 "error": "Missing required parameters: lat, lng"
@@ -53,13 +55,13 @@ def lambda_handler(event, context):
                 "phone": c.get("phone"),
                 "website": c.get("website"),
                 "open_hours": {
-                    "monday": c.get("monday_open_hours"),
-                    "tuesday": c.get("tuesday_open_hours"),
-                    "wednesday": c.get("wednesday_open_hours"),
-                    "thursday": c.get("thursday_open_hours"),
-                    "friday": c.get("friday_open_hours"),
-                    "saturday": c.get("saturday_open_hours"),
-                    "sunday": c.get("sunday_open_hours")
+                    "monday": format_hours(c.get("monday_open_hours")),
+                    "tuesday": format_hours(c.get("tuesday_open_hours")),
+                    "wednesday": format_hours(c.get("wednesday_open_hours")),
+                    "thursday": format_hours(c.get("thursday_open_hours")),
+                    "friday": format_hours(c.get("friday_open_hours")),
+                    "saturday": format_hours(c.get("saturday_open_hours")),
+                    "sunday": format_hours(c.get("sunday_open_hours"))
                 }
             })
 
