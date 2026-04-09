@@ -34,7 +34,7 @@ def calculate_shade_score(path):
         return 0
 
     # sample points
-    sampled_points = path[::SAMPLE_STEP]
+    sampled_points = path[::SAMPLE_STEP] if len(path) > SAMPLE_STEP else path
 
     if not sampled_points:
         return 0
@@ -86,8 +86,12 @@ def lambda_handler(event, context):
         results = []
 
         for i, route in enumerate(routes):
-            route_id = route.get("id", i)
-            path = route.get("path", [])
+            if isinstance(route, list):
+                path = route
+                route_id = i
+            else:
+                route_id = route.get("id", i)
+                path = route.get("path", [])
 
             score = calculate_shade_score(path)
 
