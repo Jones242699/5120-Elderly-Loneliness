@@ -40,27 +40,29 @@ def calculate_shade_score(path):
         return 0
 
     total_area = 0
-
-    # deduplicate trees
     seen_tree_ids = set()
 
     for point in sampled_points:
-        lat = point["lat"]
-        lng = point["lng"]
+        lat = point.get("lat")
+        lng = point.get("lng")
+
+        if lat is None or lng is None:
+            continue
 
         trees = get_nearby_trees(lat, lng)
-        # print("Trees found:", len(trees))
-        for t in trees:
-            tree_id = t["canopy_id"]
 
-            if tree_id not in seen_tree_ids:
+        for t in trees:
+            tree_id = t.get("canopy_id")
+
+            if tree_id and tree_id not in seen_tree_ids:
                 seen_tree_ids.add(tree_id)
                 total_area += float(t.get("canopy_area") or 0)
 
-    # average
+    if len(sampled_points) == 0:
+        return 0
+
     avg_area = total_area / len(sampled_points)
 
-    # log normalization
     score = normalize_log(avg_area)
 
     return round(score, 2)
@@ -69,7 +71,11 @@ def calculate_shade_score(path):
 def lambda_handler(event, context):
 
     try:
-        body = json.loads(event.get("body", "{}"))
+        body = event.get("body", {})
+
+        if isinstance(body, str):
+            body = json.loads(body)
+
         routes = body.get("routes", [])
 
         if not routes:
@@ -79,8 +85,8 @@ def lambda_handler(event, context):
 
         results = []
 
-        for route in routes:
-            route_id = route.get("id")
+        for i, route in enumerate(routes):
+            route_id = route.get("id", i)
             path = route.get("path", [])
 
             score = calculate_shade_score(path)
