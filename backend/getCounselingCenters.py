@@ -1,132 +1,76 @@
 import json
-import math
-from db import get_counseling_centers  # Add
+from db import get_nearby_counseling_centers
 
 
-# Toggle mock mode
-USE_MOCK = True
-
-
-def build_response(status_code, body_dict):
+def build_response(status_code, body):
     return {
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*"
         },
-        "body": json.dumps(body_dict)
+        "body": json.dumps(body)
     }
-
-
-def calculate_distance(lat1, lon1, lat2, lon2):
-    R = 6371000
-
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = math.sin(delta_phi / 2) ** 2 + \
-        math.cos(phi1) * math.cos(phi2) * \
-        math.sin(delta_lambda / 2) ** 2
-
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    return R * c
 
 
 def lambda_handler(event, context):
 
-    # 1. Extract params
-    params = event.get("queryStringParameters", {}) or {}
-
-    if not params.get("lat") or not params.get("lng"):
-        return build_response(400, {
-            "status": "error",
-            "message": "Missing user's location (lat/lng)"
-        })
-
     try:
-        user_lat = float(params.get("lat"))
-        user_lng = float(params.get("lng"))
-    except ValueError:
-        return build_response(400, {
-            "status": "error",
-            "message": "Invalid lat/lng"
-        })
+        params = event.get("queryStringParameters") or {}
 
-    # 2. Data source
-    if USE_MOCK:
-        centers = [
-            {
-                "id": "3",
-                "name": "Federation Square Cafe",
-                "address": "Flinders Street, Melbourne VIC 3000",
-                "latitude": -37.8124,
-                "longitude": 144.9678
-            },
-            {
-                "id": "4",
-                "name": "South Yarra Market Hall",
-                "address": "240 Chapel Street, South Yarra VIC 3141",
-                "latitude": -37.8408,
-                "longitude": 144.9996
-            }
-        ]
-    else:
-        try:
-            centers = get_counseling_centers()  # Fetch from database
-        except Exception as e:
-            print("ERROR: DB query failed:", str(e))
-            return build_response(500, {
-                "status": "error",
-                "message": "Database query failed"
+        lat = params.get("lat")
+        lng = params.get("lng")
+        radius = params.get("radius", 5000)  # default 5km
+
+        # parameter validation
+        if not lat or not lng:
+            return build_response(400, {
+                "error": "Missing required parameters: lat, lng"
             })
 
-    # 3. Empty DB
-    if not centers:
-        print("WARNING: No data in database")
-
-        return build_response(200, {
-            "status": "success",
-            "data": [],
-            "message": "No counseling centers exist in the database."
-        })
-
-    # 4. Calculate distance
-    result = []
-
-    for c in centers:
         try:
-            lat = float(c["latitude"])
-            lng = float(c["longitude"])
-        except (TypeError, ValueError, KeyError):
-            continue
+            lat = float(lat)
+            lng = float(lng)
+            radius = float(radius)
+        except ValueError:
+            return build_response(400, {
+                "error": "Invalid parameter format"
+            })
 
-        distance = calculate_distance(user_lat, user_lng, lat, lng)
+        centers = get_nearby_counseling_centers(lat, lng, radius)
 
-        item = dict(c)
-        item["distance_meters"] = round(distance)
-        item["distance_km"] = round(distance / 1000, 2)
+        result = []
 
-        result.append(item)
-
-    # 5. Filter empty
-    if not result:
-        print("INFO: No centers matched after filtering")
+        for c in centers:
+            result.append({
+                "id": int(c["id"]) if c.get("id") is not None else None,
+                "name": c.get("name"),
+                "address": c.get("address"),
+                "latitude": float(c["latitude"]),
+                "longitude": float(c["longitude"]),
+                "distance_meters": round(c["distance"]),
+                "rating": float(c["google_rating"]) if c.get("google_rating") else None,
+                "phone": c.get("phone"),
+                "website": c.get("website"),
+                "open_hours": {
+                    "monday": c.get("monday_open_hours"),
+                    "tuesday": c.get("tuesday_open_hours"),
+                    "wednesday": c.get("wednesday_open_hours"),
+                    "thursday": c.get("thursday_open_hours"),
+                    "friday": c.get("friday_open_hours"),
+                    "saturday": c.get("saturday_open_hours"),
+                    "sunday": c.get("sunday_open_hours")
+                }
+            })
 
         return build_response(200, {
             "status": "success",
-            "data": [],
-            "message": "No counseling centers found"
+            "count": len(result),
+            "data": result
         })
 
-    # 6. Sort + limit
-    result.sort(key=lambda x: x["distance_meters"])
-    result = result[:10]
-
-    # 7. Return
-    return build_response(200, {
-        "status": "success",
-        "data": result
-    })
+    except Exception as e:
+        print("Lambda error:", str(e))
+        return build_response(500, {
+            "error": "Internal server error"
+        })
