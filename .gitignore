@@ -166,3 +166,10 @@ env/
 
 # AWS local configuration
 .aws/
+
+# Large raw data files (>100MB — exceed GitHub limit, use cleaned/ versions instead)
+data/tree-canopies-2021-urban-forest.csv
+data/pedestrian-counting-system-monthly-counts-per-hour.csv
+
+# Python packages installed locally for data scripts
+data/py_packages/
