@@ -13,12 +13,15 @@ The system is designed as a cloud-based web application using AWS services, with
 ---
 
 ## 🏗️ Project Structure
-├── backend/ # AWS Lambda functions (core backend logic)
-├── data/ # Database-related files and data processing scripts
-├── frontend/ # Initial Vue structure (not in use)
-├── infra/ # Infrastructure setup files (AWS CLI generated)
+
+```
+├── backend/   # AWS Lambda functions (core backend logic)
+├── data/      # Database-related files and data processing scripts
+├── frontend/  # Initial Vue structure (not in use)
+├── infra/     # Infrastructure setup files (AWS CLI generated)
 ├── README.md
 └── .gitignore
+```
 
 
 ### 🔹 backend/
