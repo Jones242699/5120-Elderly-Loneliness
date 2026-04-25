@@ -110,3 +110,106 @@ GET /places?lat=-37.81&lng=144.96&radius=2000
   "total": 1
 }
 ```
+
+---
+
+## 🥈 Get Place Detail
+
+### 📍 Endpoint
+
+```http
+GET /places/{id}
+```
+
+---
+
+### 📥 Path Parameter
+
+| Parameter | Type | Description     |
+| --------- | ---- | --------------- |
+| id        | int  | Unique place ID |
+
+---
+
+### 📤 Response
+
+```json
+{
+  "id": 1,
+  "name": "Black Swan Memorial Drinking Fountain",
+  "category": "Monument",
+  "address": "Alexandra Gardens, Melbourne",
+  "artist": "Raymond B. Ewers",
+  "year": "1974",
+  "description": "Bluestone drinking fountain with bronze plaque",
+  "latitude": -37.81957,
+  "longitude": 144.97182
+}
+```
+
+---
+
+### ❗ Error Response
+
+```json
+{
+  "error": "Place not found"
+}
+```
+
+---
+
+### 🧠 Design Decisions
+
+#### 🔹 Separation of List and Detail APIs
+
+* `/places` returns lightweight data for UI cards
+* `/places/{id}` returns full details for side panel
+
+This improves performance and scalability.
+
+---
+
+#### 🔹 Location-Based Search
+
+Implemented using PostGIS spatial functions:
+
+* `ST_DWithin` → radius filtering
+* `ST_Distance` → distance calculation
+* Results are sorted by proximity
+
+---
+
+#### 🔹 Default Location Fallback
+
+Ensures usability when:
+
+* User denies location access
+* Location is unavailable
+
+---
+
+### ⚙️ Tech Stack
+
+* AWS Lambda (Python 3.12)
+* API Gateway
+* Amazon RDS (PostgreSQL + PostGIS)
+* psycopg2 (Lambda Layer)
+
+---
+
+### ⚠️ Limitations
+
+* Category filter supports only single value
+* No pagination (limit-based only)
+* Distance unit fixed in meters
+
+---
+
+### 🚀 Future Improvements
+
+* Multi-category filtering
+* Pagination (page / offset)
+* Distance formatting (meters → km)
+* Image support
+* Caching for performance
