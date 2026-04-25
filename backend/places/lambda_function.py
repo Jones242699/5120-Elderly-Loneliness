@@ -4,6 +4,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 
+# Default location (Melbourne CBD)
+DEFAULT_LAT = -37.8136
+DEFAULT_LNG = 144.9631
+
+
 def get_db_connection():
     return psycopg2.connect(
         host=os.environ["DB_HOST"],
@@ -18,7 +23,7 @@ def lambda_handler(event, context):
 
     try:
         if path == "/places":
-            return get_places_list()
+            return get_places_list(event)
 
         elif path == "/places/{id}":
             place_id = event["pathParameters"]["id"]
@@ -38,8 +43,16 @@ def lambda_handler(event, context):
         }
 
 
-# API List (for cards)
-def get_places_list():
+# API List (with distance + filter)
+def get_places_list(event):
+    params = event.get("queryStringParameters") or {}
+
+    lat = float(params.get("lat", DEFAULT_LAT))
+    lng = float(params.get("lng", DEFAULT_LNG))
+    radius = float(params.get("radius", 5000))   # meters
+    limit = int(params.get("limit", 20))
+    category = params.get("category")
+
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -50,12 +63,30 @@ def get_places_list():
             type AS category,
             address,
             latitude,
-            longitude
+            longitude,
+            ST_Distance(
+                geom::geography,
+                ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography
+            ) AS distance
         FROM public_artworks
-        LIMIT 50;
+        WHERE ST_DWithin(
+            geom::geography,
+            ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
+            %s
+        )
     """
 
-    cursor.execute(query)
+    params_list = [lng, lat, lng, lat, radius]
+
+    # category filter
+    if category:
+        query += " AND type = %s"
+        params_list.append(category)
+
+    query += " ORDER BY distance LIMIT %s"
+    params_list.append(limit)
+
+    cursor.execute(query, tuple(params_list))
     rows = cursor.fetchall()
 
     cursor.close()
@@ -73,7 +104,7 @@ def get_places_list():
     }
 
 
-# API Detail (after clicking cards)
+# API Detail
 def get_place_detail(place_id):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
