@@ -5,24 +5,27 @@
 The Places API provides location-based discovery of nearby public artworks and places in Melbourne.
 
 It supports:
-- Location-based search (distance + radius)
-- Category filtering
-- Default fallback location
-- Detailed place information retrieval
+
+* Location-based search (distance + radius)
+* Category filtering
+* Default fallback location
+* Detailed place information retrieval
 
 ---
 
 ## 🌐 Base URL
+
 ```bash
 https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod
-
+```
 
 ---
 
-## 🥇 1. Get Nearby Places
+## 🥇 Get Nearby Places
 
-### 📍 Endpoint 
-```
+### 📍 Endpoint
+
+```http
 GET /places
 ```
 
@@ -30,24 +33,24 @@ GET /places
 
 ### 📥 Query Parameters
 
-| Parameter | Type | Required | Description |
-|----------|------|--------|------------|
-| lat | float | ❌ | User latitude |
-| lng | float | ❌ | User longitude |
-| radius | float | ❌ | Search radius in meters (default: 5000) |
-| limit | int | ❌ | Number of results (default: 20) |
-| category | string | ❌ | Filter by category |
+| Parameter | Type   | Required | Description                             |
+| --------- | ------ | -------- | --------------------------------------- |
+| lat       | float  | ❌        | User latitude                           |
+| lng       | float  | ❌        | User longitude                          |
+| radius    | float  | ❌        | Search radius in meters (default: 5000) |
+| limit     | int    | ❌        | Number of results (default: 20)         |
+| category  | string | ❌        | Filter by category                      |
 
 ---
 
 ### 📌 Default Behaviour
 
 If no location is provided:
-```
+
+```bash
 lat = -37.8136
 lng = 144.9631
 ```
-
 
 (Melbourne CBD is used as default location)
 
@@ -72,19 +75,26 @@ lng = 144.9631
 }
 ```
 
-🧠 Notes
-- Results are sorted by distance (nearest first)
-- Distance is returned in meters
-- Only lightweight fields are returned for performance
-- Uses PostGIS spatial functions
+### 🧠 Notes
 
-🧪 Example Request
-```
+* Results are sorted by distance (nearest first)
+* Distance is returned in meters
+* Only lightweight fields are returned for performance
+* Uses PostGIS spatial functions
+
+---
+
+### 🧪 Example Request
+
+```http
 GET /places?lat=-37.81&lng=144.96&radius=2000
 ```
 
-🧪 Example Response
-```
+---
+
+### 🧪 Example Response
+
+```json
 {
   "places": [
     {
