@@ -4,11 +4,12 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 
-# Default location (Melbourne CBD)
+# ===== Default location (Melbourne CBD) =====
 DEFAULT_LAT = -37.8136
 DEFAULT_LNG = 144.9631
 
 
+# ===== DB Connection =====
 def get_db_connection():
     return psycopg2.connect(
         host=os.environ["DB_HOST"],
@@ -18,39 +19,54 @@ def get_db_connection():
     )
 
 
+# ===== Standard Response =====
+def response(status, body):
+    return {
+        "statusCode": status,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json"
+        },
+        "body": json.dumps(body)
+    }
+
+
+# ===== Lambda Entry =====
 def lambda_handler(event, context):
-    path = event.get("resource")
+    path = event.get("rawPath", "")
 
     try:
+        # /places
         if path == "/places":
             return get_places_list(event)
 
-        elif path == "/places/{id}":
-            place_id = event["pathParameters"]["id"]
+        # /places/{id}
+        elif path.startswith("/places/"):
+            place_id = event.get("pathParameters", {}).get("id")
+            if not place_id:
+                return response(400, {"error": "Missing place id"})
             return get_place_detail(place_id)
 
         else:
-            return {
-                "statusCode": 404,
-                "body": json.dumps({"error": "Not Found"})
-            }
+            return response(404, {"error": "Not Found"})
 
     except Exception as e:
         print("ERROR:", e)
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        return response(500, {"error": str(e)})
 
 
-# API List (with distance + filter)
+# ===== API: List Places =====
 def get_places_list(event):
     params = event.get("queryStringParameters") or {}
 
-    lat = float(params.get("lat", DEFAULT_LAT))
-    lng = float(params.get("lng", DEFAULT_LNG))
-    radius = float(params.get("radius", 5000))   # meters
-    limit = int(params.get("limit", 20))
+    try:
+        lat = float(params.get("lat", DEFAULT_LAT))
+        lng = float(params.get("lng", DEFAULT_LNG))
+        radius = float(params.get("radius", 5000))  # meters
+        limit = int(params.get("limit", 20))
+    except ValueError:
+        return response(400, {"error": "Invalid query parameters"})
+
     category = params.get("category")
 
     conn = get_db_connection()
@@ -92,19 +108,13 @@ def get_places_list(event):
     cursor.close()
     conn.close()
 
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*"
-        },
-        "body": json.dumps({
-            "places": rows,
-            "total": len(rows)
-        })
-    }
+    return response(200, {
+        "places": rows,
+        "total": len(rows)
+    })
 
 
-# API Detail
+# ===== API: Place Detail =====
 def get_place_detail(place_id):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -131,15 +141,6 @@ def get_place_detail(place_id):
     conn.close()
 
     if not row:
-        return {
-            "statusCode": 404,
-            "body": json.dumps({"error": "Place not found"})
-        }
+        return response(404, {"error": "Place not found"})
 
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*"
-        },
-        "body": json.dumps(row)
-    }
+    return response(200, row)
