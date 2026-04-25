@@ -69,7 +69,9 @@ class PlacesStack(Stack):
         # /places endpoint
         places = api.root.add_resource("places")
 
-        places.add_method(
-            "GET",
-            apigateway.LambdaIntegration(get_nearby_places)
-        )
+        # /places
+        places.add_method("GET", apigateway.LambdaIntegration(get_nearby_places))
+
+        # /places/{id}
+        place_detail = places.add_resource("{id}")
+        place_detail.add_method("GET", apigateway.LambdaIntegration(get_nearby_places))
