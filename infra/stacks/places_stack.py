@@ -47,7 +47,7 @@ class PlacesStack(Stack):
             vpc=vpc,
             security_groups=[sg],
 
-            allow_public_subnet=True,  # 🔥 加这一行
+            allow_public_subnet=True,
 
             environment={
                 "DB_HOST": "elderly-loneliness-database.c58eaa0yqnag.ap-southeast-2.rds.amazonaws.com",
