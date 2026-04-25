@@ -1,0 +1,102 @@
+# Places API Documentation
+
+## 📌 Overview
+
+The Places API provides location-based discovery of nearby public artworks and places in Melbourne.
+
+It supports:
+- Location-based search (distance + radius)
+- Category filtering
+- Default fallback location
+- Detailed place information retrieval
+
+---
+
+## 🌐 Base URL
+```bash
+https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod
+
+
+---
+
+## 🥇 1. Get Nearby Places
+
+### 📍 Endpoint 
+```
+GET /places
+```
+
+---
+
+### 📥 Query Parameters
+
+| Parameter | Type | Required | Description |
+|----------|------|--------|------------|
+| lat | float | ❌ | User latitude |
+| lng | float | ❌ | User longitude |
+| radius | float | ❌ | Search radius in meters (default: 5000) |
+| limit | int | ❌ | Number of results (default: 20) |
+| category | string | ❌ | Filter by category |
+
+---
+
+### 📌 Default Behaviour
+
+If no location is provided:
+```
+lat = -37.8136
+lng = 144.9631
+```
+
+
+(Melbourne CBD is used as default location)
+
+---
+
+### 📤 Response
+
+```json
+{
+  "places": [
+    {
+      "id": 1,
+      "name": "Black Swan Memorial Drinking Fountain",
+      "category": "Monument",
+      "address": "Alexandra Gardens, Melbourne",
+      "latitude": -37.81957,
+      "longitude": 144.97182,
+      "distance": 850.23
+    }
+  ],
+  "total": 20
+}
+```
+
+🧠 Notes
+- Results are sorted by distance (nearest first)
+- Distance is returned in meters
+- Only lightweight fields are returned for performance
+- Uses PostGIS spatial functions
+
+🧪 Example Request
+```
+GET /places?lat=-37.81&lng=144.96&radius=2000
+```
+
+🧪 Example Response
+```
+{
+  "places": [
+    {
+      "id": 3,
+      "name": "Statue of Meditation",
+      "category": "Art",
+      "address": "Melbourne Park",
+      "latitude": -37.81,
+      "longitude": 144.97,
+      "distance": 120.5
+    }
+  ],
+  "total": 1
+}
+```
