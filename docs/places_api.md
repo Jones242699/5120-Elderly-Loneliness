@@ -16,7 +16,7 @@ It supports:
 ## 🌐 Base URL
 
 ```bash
-https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod
+https://j5d3dob643.execute-api.ap-southeast-2.amazonaws.com
 ```
 
 ---
@@ -74,6 +74,8 @@ lng = 144.9631
   "total": 20
 }
 ```
+
+---
 
 ### 🧠 Notes
 
@@ -159,9 +161,9 @@ GET /places/{id}
 
 ---
 
-### 🧠 Design Decisions
+## 🧠 Design Decisions
 
-#### 🔹 Separation of List and Detail APIs
+### 🔹 Separation of List and Detail APIs
 
 * `/places` returns lightweight data for UI cards
 * `/places/{id}` returns full details for side panel
@@ -170,7 +172,7 @@ This improves performance and scalability.
 
 ---
 
-#### 🔹 Location-Based Search
+### 🔹 Location-Based Search
 
 Implemented using PostGIS spatial functions:
 
@@ -180,7 +182,7 @@ Implemented using PostGIS spatial functions:
 
 ---
 
-#### 🔹 Default Location Fallback
+### 🔹 Default Location Fallback
 
 Ensures usability when:
 
@@ -189,16 +191,16 @@ Ensures usability when:
 
 ---
 
-### ⚙️ Tech Stack
+## ⚙️ Tech Stack
 
 * AWS Lambda (Python 3.12)
-* API Gateway
+* API Gateway (HTTP API)
 * Amazon RDS (PostgreSQL + PostGIS)
 * psycopg2 (Lambda Layer)
 
 ---
 
-### ⚠️ Limitations
+## ⚠️ Limitations
 
 * Category filter supports only single value
 * No pagination (limit-based only)
@@ -206,7 +208,7 @@ Ensures usability when:
 
 ---
 
-### 🚀 Future Improvements
+## 🚀 Future Improvements
 
 * Multi-category filtering
 * Pagination (page / offset)

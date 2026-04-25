@@ -9,7 +9,7 @@ This guide explains how to integrate and use the Places API in frontend applicat
 ## 🌐 Base URL
 
 ```bash
-https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod
+https://j5d3dob643.execute-api.ap-southeast-2.amazonaws.com
 ```
 
 ---
@@ -20,7 +20,7 @@ https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod
 
 ```javascript
 fetch(
-  "https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod/places?lat=-37.81&lng=144.96&radius=2000"
+  "https://j5d3dob643.execute-api.ap-southeast-2.amazonaws.com/places?lat=-37.81&lng=144.96&radius=2000"
 )
   .then(res => res.json())
   .then(data => console.log(data));
@@ -74,7 +74,7 @@ fetch(
 
 ```javascript
 fetch(
-  "https://jc65gzx782.execute-api.ap-southeast-2.amazonaws.com/prod/places/1"
+  "https://j5d3dob643.execute-api.ap-southeast-2.amazonaws.com/places/1"
 )
   .then(res => res.json())
   .then(data => console.log(data));
@@ -140,6 +140,7 @@ fetch(url)
     if (!res.ok) throw new Error("API Error");
     return res.json();
   })
+  .then(data => console.log(data))
   .catch(err => console.error(err));
 ```
 
