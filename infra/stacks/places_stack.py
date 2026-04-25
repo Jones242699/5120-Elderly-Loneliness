@@ -50,7 +50,7 @@ class PlacesStack(Stack):
             allow_public_subnet=True,  # 🔥 加这一行
 
             environment={
-                "DB_HOST": "...",
+                "DB_HOST": "elderly-loneliness-database.c58eaa0yqnag.ap-southeast-2.rds.amazonaws.com",
                 "DB_NAME": "postgres",
                 "DB_USER": "postgres",
                 "DB_PASSWORD": "fit5120te28"
