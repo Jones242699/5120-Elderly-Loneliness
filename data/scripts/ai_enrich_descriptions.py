@@ -21,7 +21,10 @@ Usage:
 
 import os
 import re
+import sys
 import time
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../py_packages"))
 
 from google import genai
 from google.genai import types
@@ -34,7 +37,7 @@ INPUT_CSV = os.path.join(CLEANED, "places_enriched.csv")
 OUTPUT_CSV = os.path.join(CLEANED, "places_final.csv")
 
 MODEL = "gemini-3.1-flash-lite-preview"
-DELAY = 4.5    # seconds between requests (15 RPM → 1 req/4s, with small buffer)
+DELAY = 6.0    # seconds between requests (~10 RPM, well under 15 RPM cap)
 SAVE_EVERY = 50
 MAX_RETRIES = 3
 
@@ -158,10 +161,15 @@ for i, idx in enumerate(pending):
             msg = str(e)
             # Parse retry delay from 429 response if available
             m = re.search(r"retryDelay.*?(\d+)s", msg)
-            wait = int(m.group(1)) + 2 if m else 60
-            if "429" in msg and attempt < MAX_RETRIES - 1:
-                print(f"  429 rate limit — waiting {wait}s before retry...")
-                time.sleep(wait)
+            if "429" in msg or "503" in msg:
+                wait = int(m.group(1)) + 2 if m else 30
+                if attempt < MAX_RETRIES - 1:
+                    print(f"  {'429' if '429' in msg else '503'} — waiting {wait}s before retry (attempt {attempt+1}/{MAX_RETRIES})...")
+                    time.sleep(wait)
+                else:
+                    print(f"  ERROR [{row['name']}]: {e}")
+                    errors += 1
+                    break
             else:
                 print(f"  ERROR [{row['name']}]: {e}")
                 errors += 1
