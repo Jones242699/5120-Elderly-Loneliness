@@ -6,13 +6,13 @@ Tables already handled separately: public_benches, public_toilets, pedestrian_da
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "py_packages"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../py_packages"))
 
 import psycopg2
 import pandas as pd
 
 BASE = os.path.dirname(__file__)
-CLEANED = os.path.join(BASE, "cleaned")
+CLEANED = os.path.join(BASE, "../cleaned")
 
 DB = dict(
     host="elderly-loneliness-database.c58eaa0yqnag.ap-southeast-2.rds.amazonaws.com",
@@ -325,6 +325,46 @@ load(
     VALUES (%s,%s,%s,%s, ST_SetSRID(ST_MakePoint(%s,%s),4326))
     """,
     lambda r: (val(r["sensor_name"]), float(r["avg_daily_pedestrians"]),
+               float(r["latitude"]), float(r["longitude"]),
+               float(r["longitude"]), float(r["latitude"]))
+)
+
+# ─────────────────────────────────────────────
+# 9. PLACES (AI-enriched landmarks, artworks, memorials)
+# ─────────────────────────────────────────────
+print("\n[9] Loading places...")
+df = pd.read_csv(os.path.join(CLEANED, "places_final.csv"))
+
+load(
+    "places", df,
+    """
+    CREATE TABLE IF NOT EXISTS places (
+        id           SERIAL PRIMARY KEY,
+        name         TEXT,
+        category     VARCHAR(100),
+        sub_category TEXT,
+        address      TEXT,
+        artist       TEXT,
+        year         VARCHAR(50),
+        description  TEXT,
+        material     TEXT,
+        ai_validated BOOLEAN DEFAULT FALSE,
+        latitude     DOUBLE PRECISION NOT NULL,
+        longitude    DOUBLE PRECISION NOT NULL,
+        geom         GEOGRAPHY(POINT, 4326)
+    );
+    CREATE INDEX IF NOT EXISTS idx_places_geom ON places USING GIST(geom);
+    CREATE INDEX IF NOT EXISTS idx_places_category ON places (category);
+    """,
+    """
+    INSERT INTO places
+        (name, category, sub_category, address, artist, year, description, material, ai_validated, latitude, longitude, geom)
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, ST_SetSRID(ST_MakePoint(%s,%s),4326))
+    """,
+    lambda r: (val(r["name"]), val(r["category"]), val(r["sub_category"]),
+               val(r["address"]), val(r["artist"]), val(r["year"]),
+               val(r["description"]), val(r["material"]),
+               bool(r["ai_validated"]),
                float(r["latitude"]), float(r["longitude"]),
                float(r["longitude"]), float(r["latitude"]))
 )
