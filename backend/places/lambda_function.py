@@ -76,7 +76,7 @@ def get_places_list(event):
         SELECT 
             id,
             name,
-            type AS category,
+            category,
             address,
             latitude,
             longitude,
@@ -84,7 +84,7 @@ def get_places_list(event):
                 geom::geography,
                 ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography
             ) AS distance
-        FROM public_artworks
+        FROM places
         WHERE ST_DWithin(
             geom::geography,
             ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
@@ -96,7 +96,7 @@ def get_places_list(event):
 
     # category filter
     if category:
-        query += " AND type = %s"
+        query += " AND category = %s"
         params_list.append(category)
 
     query += " ORDER BY distance LIMIT %s"
@@ -123,14 +123,14 @@ def get_place_detail(place_id):
         SELECT 
             id,
             name,
-            type AS category,
+            category,
             address,
             artist,
             year,
             description,
             latitude,
             longitude
-        FROM public_artworks
+        FROM places
         WHERE id = %s;
     """
 
