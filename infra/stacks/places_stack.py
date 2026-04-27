@@ -38,20 +38,28 @@ class PlacesStack(Stack):
         get_nearby_places = lambda_.Function(
             self,
             "getNearbyPlaces",
+
+            function_name="elderly-support-getNearbyPlaces",
+
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_function.lambda_handler",
+
             code=lambda_.Code.from_asset("../backend/places"),
+
             timeout=Duration.seconds(10),
             memory_size=128,
+
             vpc=vpc,
             security_groups=[sg],
             allow_public_subnet=True,
+
             environment={
                 "DB_HOST": "elderly-loneliness-database.c58eaa0yqnag.ap-southeast-2.rds.amazonaws.com",
                 "DB_NAME": "postgres",
                 "DB_USER": "postgres",
                 "DB_PASSWORD": "fit5120te28"
             },
+            
             layers=[psycopg2_layer]
         )
 

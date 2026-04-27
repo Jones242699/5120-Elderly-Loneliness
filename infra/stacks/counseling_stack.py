@@ -24,9 +24,14 @@ class CounselingStack(Stack):
         get_counseling = lambda_.Function(
             self,
             "GetCounselingCenters",
+
+            function_name="elderly-support-GetCounselingCenters",
+            
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_function.lambda_handler",
+            
             code=lambda_.Code.from_asset("../backend/counseling"),
+            
             timeout=Duration.seconds(10),
             memory_size=128,
 
