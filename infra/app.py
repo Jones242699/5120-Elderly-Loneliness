@@ -3,6 +3,7 @@ import aws_cdk as cdk
 from stacks.api_stack import ApiStack
 from stacks.places_stack import PlacesStack
 from stacks.counseling_stack import CounselingStack
+from stacks.benches_stack import BenchesStack
 
 app = cdk.App()
 
@@ -30,6 +31,13 @@ PlacesStack(
 CounselingStack(
     app,
     "CounselingStack",
+    api=api_stack.api,
+    env=env
+)
+
+BenchesStack(
+    app,
+    "BenchesStack",
     api=api_stack.api,
     env=env
 )
