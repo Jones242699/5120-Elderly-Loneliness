@@ -1,22 +1,10 @@
 import json
-import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from db import get_places, get_place_by_id
 
 
 # ===== Default location (Melbourne CBD) =====
 DEFAULT_LAT = -37.8136
 DEFAULT_LNG = 144.9631
-
-
-# ===== DB Connection =====
-def get_db_connection():
-    return psycopg2.connect(
-        host=os.environ["DB_HOST"],
-        database=os.environ["DB_NAME"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"]
-    )
 
 
 # ===== Standard Response =====
@@ -69,44 +57,7 @@ def get_places_list(event):
 
     category = params.get("category")
 
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    query = """
-        SELECT 
-            id,
-            name,
-            category,
-            address,
-            latitude,
-            longitude,
-            ST_Distance(
-                geom::geography,
-                ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography
-            ) AS distance
-        FROM places
-        WHERE ST_DWithin(
-            geom::geography,
-            ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
-            %s
-        )
-    """
-
-    params_list = [lng, lat, lng, lat, radius]
-
-    # category filter
-    if category:
-        query += " AND category = %s"
-        params_list.append(category)
-
-    query += " ORDER BY distance LIMIT %s"
-    params_list.append(limit)
-
-    cursor.execute(query, tuple(params_list))
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
+    rows = get_places(lat, lng, radius, limit, category)
 
     return response(200, {
         "places": rows,
@@ -116,29 +67,7 @@ def get_places_list(event):
 
 # ===== API: Place Detail =====
 def get_place_detail(place_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    query = """
-        SELECT 
-            id,
-            name,
-            category,
-            address,
-            artist,
-            year,
-            description,
-            latitude,
-            longitude
-        FROM places
-        WHERE id = %s;
-    """
-
-    cursor.execute(query, (place_id,))
-    row = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
+    row = get_place_by_id(place_id)
 
     if not row:
         return response(404, {"error": "Place not found"})
