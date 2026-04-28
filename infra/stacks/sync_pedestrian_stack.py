@@ -25,13 +25,21 @@ class SyncPedestrianStack(Stack):
 
             timeout=Duration.seconds(30),
             memory_size=128,
- 
+
             environment={
                 "DB_HOST": "elderly-loneliness-database.c58eaa0yqnag.ap-southeast-2.rds.amazonaws.com",
                 "DB_NAME": "postgres",
                 "DB_USER": "postgres",
                 "DB_PASSWORD": "fit5120te28"
-            }
+            },
+
+            layers=[
+                lambda_.LayerVersion.from_layer_version_arn(
+                    self,
+                    "Psycopg2LayerSync",
+                    "arn:aws:lambda:ap-southeast-2:021104859098:layer:psycopg2:2"
+                )
+            ]
         )
 
         scheduler.Schedule(
