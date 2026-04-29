@@ -2,7 +2,9 @@
 
 ## 📌 Project Overview
 
-This project aims to reduce loneliness among older adults (60+) in the City of Melbourne by providing location-based support, including:
+This project aims to reduce loneliness among older adults (60+) in the City of Melbourne by leveraging spatial data, cloud infrastructure, and location-based services.
+
+Key features include:
 
 - Walkable route suggestions (future)
 - Access to nearby support services (e.g. counselling centres)
@@ -18,31 +20,39 @@ The system is designed as a cloud-based web application using AWS services, with
 ├── backend/   # AWS Lambda functions (core backend logic)
 ├── data/      # Database-related files and data processing scripts
 ├── frontend/  # Initial Vue structure (not in use)
-├── infra/     # Infrastructure setup files (AWS CLI generated)
+├── infra/     # Infrastructure as Code (AWS CDK)
 ├── README.md
 └── .gitignore
 ```
 
+---
 
 ### 🔹 backend/
+
 Contains all backend logic implemented using **AWS Lambda (Python)**.
 
 Includes:
+
 - API endpoints (via API Gateway)
 - Database queries (PostgreSQL + PostGIS)
-- Route scoring logic (e.g. shade, pedestrian density)
+- Route scoring logic:
+  - Shade score (tree canopy)
+  - Pedestrian density score
 
 ---
 
 ### 🔹 data/
+
 Contains database-related resources, including:
+
 - Data cleaning pipelines
-- Dataset integration (e.g. Melbourne open datasets)
-- Scripts for preparing data before inserting into database
+- Dataset integration (City of Melbourne open datasets)
+- Scripts for preparing and inserting data into PostgreSQL
 
 ---
 
 ### 🔹 frontend/
+
 This folder contains an **initial Vue.js scaffold**, but it is **not currently in use**.
 
 👉 The active frontend is hosted in a **separate GitHub repository**.
@@ -50,15 +60,17 @@ This folder contains an **initial Vue.js scaffold**, but it is **not currently i
 ---
 
 ### 🔹 infra/
-Contains infrastructure-related files generated during setup.
 
-- Initially created using AWS tools
-- From **Iteration 2 onwards, AWS CLI is used for infrastructure management**
+Contains infrastructure definitions using **AWS CDK (Infrastructure as Code)**.
 
-Includes configurations for:
-- Lambda deployment
+Includes configuration for:
+
 - API Gateway
-- Supporting cloud resources
+- Lambda functions
+- IAM roles and permissions
+- VPC and Security Groups (for RDS access)
+
+The system is organised into multiple stacks (e.g. ApiStack, PlacesStack, etc.) for modular deployment.
 
 ---
 
@@ -75,7 +87,7 @@ Includes configurations for:
 - Custom data processing pipelines
 
 ### Infrastructure
-- AWS CLI
+- AWS CDK (Infrastructure as Code)
 - IAM, VPC, Security Groups
 
 ### Frontend
@@ -83,15 +95,50 @@ Includes configurations for:
 
 ---
 
+## 🔌 API Overview
+
+Base URL:
+```
+https://<your-api-id>.execute-api.ap-southeast-2.amazonaws.com
+```
+
+### Available Endpoints
+
+- **GET /places**  
+  Retrieve nearby places based on user location
+
+- **GET /benches**  
+  Retrieve nearby benches using bounding box query
+
+- **GET /counseling-centers**  
+  Find nearby counselling and support services
+
+- **POST /score/pedestrian**  
+  Calculate pedestrian density score for routes
+
+- **POST /score/shade**  
+  Calculate shade score based on tree canopy coverage
+
+---
+
 ## 🚀 Deployment
 
-Backend services are deployed using AWS Lambda and exposed via API Gateway.
+The backend is deployed using AWS CDK with multiple stacks.
 
-Typical workflow:
-1. Develop Lambda functions locally
-2. Deploy using AWS CLI
-3. Connect to RDS database
-4. Test via API endpoints (Postman / browser)
+### Typical workflow:
+
+1. Define infrastructure using CDK stacks
+2. Deploy using:
+
+```bash
+cd infra
+source .venv/bin/activate
+cdk deploy --all
+```
+
+3. Lambda functions are automatically integrated with API Gateway
+4. RDS (PostgreSQL + PostGIS) is accessed via VPC
+5. APIs are tested using Postman or browser
 
 ---
 
@@ -104,17 +151,17 @@ Typical workflow:
 | Data Pipeline | ✅ Active |
 | Frontend (this repo) | ⚠️ Not in use |
 | Frontend (separate repo) | ✅ Active |
-| Infrastructure | ✅ CLI-based (Iteration 2 onwards) |
+| Infrastructure | ✅ CDK-based |
 
 ---
 
 ## 📌 Notes
 
-- This repository focuses primarily on **backend, data, and infrastructure**
+- This repository focuses on **backend, data, and infrastructure**
 - Frontend development is maintained separately
-- Infrastructure approach evolved during the project:
-  - Early stage: tool-generated setup
-  - Iteration 2+: AWS CLI-based management
+- Infrastructure evolved during the project:
+  - Early stage: manual / tool-generated setup
+  - Iteration 2+: AWS CDK (Infrastructure as Code)
 
 ---
 
@@ -123,6 +170,7 @@ Typical workflow:
 This project is developed as part of **FIT5120 (Monash University)**.
 
 It follows an **iterative development approach**, with continuous integration of:
+
 - Data-driven features
 - Cloud-based architecture
 - User-centered design for older adults
@@ -131,7 +179,9 @@ It follows an **iterative development approach**, with continuous integration of
 
 ## 📎 Future Work
 
-- Full frontend integration
-- Route recommendation engine
-- Event/activity recommendation system
-- Enhanced usability for elderly users
+- Intelligent route recommendation based on:
+  - Shade coverage (tree canopy)
+  - Pedestrian density
+  - Accessibility (benches, toilets)
+- Community event integration
+- Improved UI/UX for accessibility (larger fonts, simplified navigation)
