@@ -1,3 +1,7 @@
+"""
+AWS Lambda handler for the sync-pedestrian worker.
+Scheduled task that fetches the latest pedestrian counting data from Melbourne's Open Data API, processes it, and updates the database.
+"""
 import json
 import urllib.request
 from collections import defaultdict

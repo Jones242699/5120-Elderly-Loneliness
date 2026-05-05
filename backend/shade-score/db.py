@@ -1,3 +1,6 @@
+"""
+Database operations for the shade-score API.
+"""
 import psycopg2
 import os
 from psycopg2.extras import RealDictCursor

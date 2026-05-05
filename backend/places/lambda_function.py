@@ -1,3 +1,7 @@
+"""
+AWS Lambda handler for the places API.
+Serves endpoints for listing nearby places and retrieving detailed information about a specific place.
+"""
 import json
 from db import get_places, get_place_by_id
 

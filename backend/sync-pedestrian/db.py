@@ -1,3 +1,6 @@
+"""
+Database operations for the sync-pedestrian worker.
+"""
 import psycopg2
 import os
 from datetime import datetime

@@ -1,3 +1,6 @@
+"""
+Database operations for the pedestrian-score API.
+"""
 import psycopg2
 import os
 

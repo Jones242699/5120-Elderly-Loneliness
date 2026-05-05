@@ -1,3 +1,7 @@
+"""
+AWS Lambda handler for the pedestrian-score API.
+Calculates a social score for walking routes based on historical pedestrian density data.
+"""
 import json
 import math
 from db import get_nearby_sensor_volumes

@@ -1,3 +1,7 @@
+"""
+AWS Lambda handler for the counseling API.
+Processes requests to find nearby counseling centers based on latitude, longitude, and radius.
+"""
 import json
 from db import get_nearby_counseling_centers
 

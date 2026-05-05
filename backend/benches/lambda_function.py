@@ -1,3 +1,7 @@
+"""
+AWS Lambda handler for the benches API.
+Processes requests to find public benches within a bounding box and returns JSON data.
+"""
 import json
 from db import get_benches_in_bbox
 

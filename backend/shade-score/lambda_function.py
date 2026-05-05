@@ -1,3 +1,7 @@
+"""
+AWS Lambda handler for the shade-score API.
+Calculates a shade score for walking routes based on nearby tree canopy coverage.
+"""
 import json
 import math
 from db import get_nearby_trees
