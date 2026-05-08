@@ -8,6 +8,8 @@ from stacks.pedestrian_score_stack import PedestrianScoreStack
 from stacks.shade_score_stack import ShadeScoreStack
 from stacks.sync_pedestrian_stack import SyncPedestrianStack
 from stacks.routes_stack import RoutesStack
+from stacks.venues_stack import VenuesStack
+
 
 app = cdk.App()
 
@@ -69,6 +71,13 @@ SyncPedestrianStack(
 RoutesStack(
     app,
     "RoutesStack",
+    api=api_stack.api,
+    env=env
+)
+
+VenuesStack(
+    app,
+    "VenuesStack",
     api=api_stack.api,
     env=env
 )
