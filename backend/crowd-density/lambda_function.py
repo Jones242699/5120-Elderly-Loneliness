@@ -39,9 +39,15 @@ def lambda_handler(event, context):
 
         params = event.get("queryStringParameters") or {}
 
-        lat = float(params.get("lat", DEFAULT_LAT))
-        lng = float(params.get("lng", DEFAULT_LNG))
-        radius = int(params.get("radius", DEFAULT_RADIUS))
+        try:
+            lat = float(params.get("lat", DEFAULT_LAT))
+            lng = float(params.get("lng", DEFAULT_LNG))
+            radius = int(params.get("radius", DEFAULT_RADIUS))
+
+        except ValueError:
+            return build_response(400, {
+                "error": "Invalid query parameters"
+            })
 
         rows = get_nearby_sensor_volumes(lat, lng, radius)
 
