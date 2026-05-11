@@ -9,6 +9,7 @@ from db import get_nearby_sensor_volumes
 DEFAULT_LAT = -37.8136
 DEFAULT_LNG = 144.9631
 DEFAULT_RADIUS = 2000
+DEFAULT_LIMIT = 1
 
 
 def build_response(status_code, body):
@@ -43,13 +44,19 @@ def lambda_handler(event, context):
             lat = float(params.get("lat", DEFAULT_LAT))
             lng = float(params.get("lng", DEFAULT_LNG))
             radius = int(params.get("radius", DEFAULT_RADIUS))
+            limit = int(params.get("limit", DEFAULT_LIMIT))
 
         except ValueError:
             return build_response(400, {
                 "error": "Invalid query parameters"
             })
 
-        rows = get_nearby_sensor_volumes(lat, lng, radius)
+        rows = get_nearby_sensor_volumes(
+            lat,
+            lng,
+            radius,
+            limit
+        )
 
         results = []
 
@@ -59,12 +66,14 @@ def lambda_handler(event, context):
             sensor_lat = row[1]
             sensor_lng = row[2]
             volume = float(row[3])
+            distance = round(float(row[4]), 2)
 
             results.append({
                 "sensor_id": sensor_id,
                 "lat": sensor_lat,
                 "lng": sensor_lng,
                 "volume": volume,
+                "distance": distance,
                 "level": get_volume_level(volume)
             })
 

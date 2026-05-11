@@ -48,7 +48,7 @@ def get_all_sensor_volumes():
     return rows
 
 
-def get_nearby_sensor_volumes(lat, lng, radius):
+def get_nearby_sensor_volumes(lat, lng, radius, limit):
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -59,15 +59,33 @@ def get_nearby_sensor_volumes(lat, lng, radius):
             s.latitude,
             s.longitude,
             p.weighted_volume,
-            p.updated_at
+
+            ST_DistanceSphere(
+                ST_MakePoint(s.longitude, s.latitude),
+                ST_MakePoint(%s, %s)
+            ) AS distance
+
         FROM pedestrian_data p
+
         JOIN sensor_locations s
         ON p.sensor_id = s.location_id
+
         WHERE ST_DistanceSphere(
             ST_MakePoint(s.longitude, s.latitude),
             ST_MakePoint(%s, %s)
         ) <= %s
-    """, (lng, lat, radius))
+
+        ORDER BY distance ASC
+
+        LIMIT %s
+    """, (
+        lng,
+        lat,
+        lng,
+        lat,
+        radius,
+        limit
+    ))
 
     rows = cursor.fetchall()
 
