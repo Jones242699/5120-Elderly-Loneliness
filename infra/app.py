@@ -10,6 +10,7 @@ from stacks.sync_pedestrian_stack import SyncPedestrianStack
 from stacks.routes_stack import RoutesStack
 from stacks.venues_stack import VenuesStack
 from stacks.crowd_density_stack import CrowdDensityStack
+from stacks.events_stack import EventsStack
 
 
 app = cdk.App()
@@ -86,6 +87,13 @@ VenuesStack(
 CrowdDensityStack(
     app,
     "CrowdDensityStack",
+    api=api_stack.api,
+    env=env
+)
+
+EventsStack(
+    app,
+    "EventsStack",
     api=api_stack.api,
     env=env
 )
