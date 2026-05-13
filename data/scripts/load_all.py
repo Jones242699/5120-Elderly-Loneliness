@@ -5,6 +5,7 @@ Tables already handled separately: public_benches, public_toilets, pedestrian_da
 
 import sys
 import os
+import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../py_packages"))
 
@@ -368,6 +369,70 @@ load(
                float(r["latitude"]), float(r["longitude"]),
                float(r["longitude"]), float(r["latitude"]))
 )
+
+# ─────────────────────────────────────────────
+# 10. EVENTS FOR OLDER PEOPLE (City of Melbourne)
+# ─────────────────────────────────────────────
+print("\n[10] Loading events_older_people...")
+events_path = os.path.join(CLEANED, "events_older_people.json")
+if os.path.exists(events_path):
+    with open(events_path, encoding="utf-8") as f:
+        events_data = json.load(f)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS events_older_people (
+            id          SERIAL PRIMARY KEY,
+            title       TEXT,
+            url         TEXT,
+            start_date  DATE,
+            end_date    DATE,
+            location    TEXT,
+            description TEXT,
+            image_url   TEXT,
+            frequency   TEXT,
+            day_of_week VARCHAR(20),
+            time        VARCHAR(100),
+            is_online   BOOLEAN,
+            address     TEXT,
+            cost        TEXT,
+            phone       VARCHAR(30),
+            email       VARCHAR(100)
+        );
+    """)
+    cur.execute("TRUNCATE events_older_people RESTART IDENTITY;")
+    cur.executemany(
+        """
+        INSERT INTO events_older_people
+            (title, url, start_date, end_date, location, description, image_url,
+             frequency, day_of_week, time, is_online, address, cost, phone, email)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """,
+        [
+            (
+                e.get("title") or None,
+                e.get("url") or None,
+                e.get("startDate") or None,
+                e.get("endDate") or None,
+                e.get("location") or None,
+                e.get("description") or None,
+                e.get("imageUrl") or None,
+                e.get("frequency") or None,
+                e.get("dayOfWeek") or None,
+                e.get("time") or None,
+                bool(e.get("isOnline", False)),
+                e.get("address") or None,
+                e.get("cost") or None,
+                e.get("phone") or None,
+                e.get("email") or None,
+            )
+            for e in events_data
+        ],
+    )
+    conn.commit()
+    cur.execute("SELECT COUNT(*) FROM events_older_people;")
+    print(f"  events_older_people: {cur.fetchone()[0]:,} rows loaded")
+else:
+    print("  SKIP: events_older_people.json not found — run scrape_events_older_people.py first")
 
 # ─────────────────────────────────────────────
 # Final summary
