@@ -23,7 +23,10 @@ DEFAULT_LNG = 144.9631
 DEFAULT_LIMIT = 20
 
 # ===== Per Keyword Limit =====
-PER_KEYWORD_LIMIT = 3
+PER_KEYWORD_LIMIT = 5
+
+# ===== Max Distance Filter (KM) =====
+MAX_DISTANCE_KM = 50
 
 # ===== Search Keywords =====
 SEARCH_KEYWORDS = [
@@ -410,6 +413,15 @@ def lambda_handler(event, context):
             for event_item in events:
 
                 event_id = event_item.get("id")
+
+                # ===== Distance Filter =====
+                distance = event_item.get("distance")
+
+                if (
+                    distance is not None
+                    and distance > MAX_DISTANCE_KM
+                ):
+                    continue
 
                 # ===== Deduplicate =====
                 if event_id in seen_ids:
