@@ -10,6 +10,7 @@ import json
 import os
 import urllib.request
 import urllib.parse
+import time
 
 
 # ===== API Config =====
@@ -21,15 +22,45 @@ DEFAULT_LNG = 144.9631
 
 DEFAULT_LIMIT = 20
 
-# ===== Elderly-Friendly Keywords =====
-DEFAULT_KEYWORDS = [
+# ===== Per Keyword Limit =====
+PER_KEYWORD_LIMIT = 3
+
+# ===== Search Keywords =====
+SEARCH_KEYWORDS = [
     "community",
-    "wellness",
     "music",
     "art",
-    "social",
+    "wellness",
+    "workshop",
     "walking",
-    "seniors"
+    "seniors",
+    "gardening",
+    "yoga",
+    "theatre"
+]
+
+# ===== Local Elderly-Friendly Filter =====
+FILTER_KEYWORDS = [
+    "book club",
+    "digital literacy",
+    "coffee morning",
+    "friendship",
+    "balance class",
+    "tai chi",
+    "bird watching",
+    "gentle exercise",
+    "community lunch",
+    "reading",
+    "history",
+    "heritage"
+]
+
+# ===== Excluded Words =====
+EXCLUDED_WORDS = [
+    "motogp",
+    "campground",
+    "coach",
+    "race day"
 ]
 
 
@@ -276,6 +307,36 @@ def fetch_event_detail(event_id):
     }
 
 
+# ===== Local Event Filter =====
+def is_relevant_event(event_item):
+
+    name = (event_item.get("name") or "").lower()
+
+    classification = (
+        event_item.get("classification") or ""
+    ).lower()
+
+    venue = (event_item.get("venue") or "").lower()
+
+    combined_text = (
+        f"{name} {classification} {venue}"
+    )
+
+    # ===== Exclude Bad Results =====
+    for excluded_word in EXCLUDED_WORDS:
+
+        if excluded_word in combined_text:
+            return False
+
+    # ===== Local Elderly Keyword Filter =====
+    for keyword in FILTER_KEYWORDS:
+
+        if keyword.lower() in combined_text:
+            return True
+
+    return True
+
+
 # ===== Lambda Entry =====
 def lambda_handler(event, context):
 
@@ -320,23 +381,29 @@ def lambda_handler(event, context):
 
         seen_ids = set()
 
-        # ===== Use User Keyword =====
+        # ===== User Filter =====
         if user_keyword:
 
             keywords = [user_keyword]
 
-        # ===== Use Default Elderly-Friendly Keywords =====
+            fetch_limit = limit
+
+        # ===== Default Mixed Recommendation =====
         else:
 
-            keywords = DEFAULT_KEYWORDS
+            keywords = SEARCH_KEYWORDS
+
+            fetch_limit = PER_KEYWORD_LIMIT
 
         # ===== Fetch Events =====
         for keyword in keywords:
 
+            time.sleep(0.5)
+
             events = fetch_events(
                 lat,
                 lng,
-                limit,
+                fetch_limit,
                 keyword
             )
 
@@ -345,11 +412,16 @@ def lambda_handler(event, context):
                 event_id = event_item.get("id")
 
                 # ===== Deduplicate =====
-                if event_id not in seen_ids:
+                if event_id in seen_ids:
+                    continue
 
-                    seen_ids.add(event_id)
+                # ===== Local Filter =====
+                if not is_relevant_event(event_item):
+                    continue
 
-                    all_events.append(event_item)
+                seen_ids.add(event_id)
+
+                all_events.append(event_item)
 
         # ===== Final Limit =====
         all_events = all_events[:limit]
