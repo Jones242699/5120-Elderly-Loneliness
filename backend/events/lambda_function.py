@@ -20,13 +20,16 @@ API_KEY = os.environ["TICKETMASTER_API_KEY"]
 DEFAULT_LAT = -37.8136
 DEFAULT_LNG = 144.9631
 
-DEFAULT_LIMIT = 20
+DEFAULT_LIMIT = 100
 
 # ===== Per Keyword Limit =====
-PER_KEYWORD_LIMIT = 5
+PER_KEYWORD_LIMIT = 10
 
 # ===== Max Distance Filter (KM) =====
 MAX_DISTANCE_KM = 50
+
+# ===== Australia Country Code =====
+AU_COUNTRY_CODE = "AU"
 
 # ===== Search Keywords =====
 SEARCH_KEYWORDS = [
@@ -121,6 +124,7 @@ def fetch_events(lat, lng, limit, keyword):
         venue_name = None
         venue_lat = None
         venue_lng = None
+        venue_country = None
 
         embedded = event_item.get("_embedded", {})
         venues = embedded.get("venues", [])
@@ -135,6 +139,10 @@ def fetch_events(lat, lng, limit, keyword):
 
             venue_lat = location.get("latitude")
             venue_lng = location.get("longitude")
+
+            country = venue.get("country", {})
+
+            venue_country = country.get("countryCode")
 
         image_url = None
 
@@ -172,6 +180,8 @@ def fetch_events(lat, lng, limit, keyword):
 
             "latitude": venue_lat,
             "longitude": venue_lng,
+
+            "country": venue_country,
 
             "distance": event_item.get("distance"),
 
@@ -218,6 +228,8 @@ def fetch_event_detail(event_id):
 
         location = venue.get("location", {})
 
+        country = venue.get("country", {})
+
         venue_data = {
             "name": venue.get("name"),
 
@@ -230,6 +242,8 @@ def fetch_event_detail(event_id):
                 venue.get("city", {})
                 .get("name")
             ),
+
+            "country": country.get("countryCode"),
 
             "latitude": location.get("latitude"),
 
@@ -421,6 +435,12 @@ def lambda_handler(event, context):
                     distance is not None
                     and distance > MAX_DISTANCE_KM
                 ):
+                    continue
+
+                # ===== Australia Only Filter =====
+                country = event_item.get("country")
+
+                if country != AU_COUNTRY_CODE:
                     continue
 
                 # ===== Deduplicate =====
