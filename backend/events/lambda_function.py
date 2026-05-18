@@ -397,6 +397,7 @@ def lambda_handler(event, context):
         all_events = []
 
         seen_ids = set()
+        seen_events = set()
 
         # ===== User Filter =====
         if user_keyword:
@@ -426,8 +427,6 @@ def lambda_handler(event, context):
 
             for event_item in events:
 
-                event_id = event_item.get("id")
-
                 # ===== Distance Filter =====
                 distance = event_item.get("distance")
 
@@ -443,15 +442,27 @@ def lambda_handler(event, context):
                 if country != AU_COUNTRY_CODE:
                     continue
 
-                # ===== Deduplicate =====
-                if event_id in seen_ids:
-                    continue
-
                 # ===== Local Filter =====
                 if not is_relevant_event(event_item):
                     continue
 
+                event_id = event_item.get("id")
+
+                # ===== Exact ID Deduplicate =====
+                if event_id in seen_ids:
+                    continue
+
+                # ===== Smart Deduplicate =====
+                event_key = (
+                    (event_item.get("name") or "").strip().lower(),
+                    (event_item.get("venue") or "").strip().lower()
+                )
+
+                if event_key in seen_events:
+                    continue
+
                 seen_ids.add(event_id)
+                seen_events.add(event_key)
 
                 all_events.append(event_item)
 
